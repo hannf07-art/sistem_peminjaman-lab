@@ -15,7 +15,8 @@ import {
 } from '@/components/auth-ui';
 
 export default function RegisterPage() {
-  const tahunIni = new Date().getFullYear();
+  // Menggunakan angka statis agar lolos prerender Vercel
+  const tahunIni = 2026;
 
   const [error, setError] = useState<string | null>(null);
   const [sukses, setSukses] = useState<{ perluVerifikasiEmail: boolean } | null>(null);
