@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { register } from '@/app/actions/auth';
 import { DAFTAR_PRODI } from '@/lib/prodi';
@@ -15,11 +15,7 @@ import {
 } from '@/components/auth-ui';
 
 export default function RegisterPage() {
-  const [tahunIni, setTahunIni] = useState(2026); // Tahun bawaan
-
-  useEffect(() => {
-    setTahunIni(new Date().getFullYear()); // Membaca tahun asli dari perangkat user
-  }, []);
+  const tahunIni = new Date().getFullYear();
 
   const [error, setError] = useState<string | null>(null);
   const [sukses, setSukses] = useState<{ perluVerifikasiEmail: boolean } | null>(null);
