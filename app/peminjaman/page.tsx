@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { createPeminjaman } from '@/app/actions/peminjaman';
+import { logout } from '@/app/actions/auth';
 
 /* =========================================================
  * Konstanta & helper
@@ -233,13 +234,27 @@ export default function PeminjamanPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Peminjaman Laboratorium
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {tanggalLabel} &middot; Lihat jam kosong, lalu ajukan peminjaman untuk hari ini.
-          </p>
+        <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
+              Universitas &apos;Aisyiyah Palembang
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Laboratorium UNISA Palembang
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {tanggalLabel} &middot; Lihat jam kosong, lalu ajukan peminjaman untuk hari ini.
+            </p>
+          </div>
+
+          <form action={logout}>
+            <button
+              type="submit"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-slate-200"
+            >
+              Keluar
+            </button>
+          </form>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-5">

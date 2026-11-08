@@ -105,6 +105,16 @@ export async function createPeminjaman(
     return { success: false, error: 'Anda harus login terlebih dahulu' };
   }
 
+  // Hanya akun yang sudah disetujui admin
+  const { data: profil } = await supabase
+  .from('users')
+  .select('role')
+  .eq('id', auth.user.id)
+  .single();
+
+  if (!profil || !['mahasiswa', 'kaprodi'].includes(profil.role)) {
+  return { success: false, error: 'Akun Anda belum disetujui admin' };
+  }
   // e. Kirim ke Supabase (trigger bentrok berjalan di sini)
   const { data, error } = await supabase
     .from('peminjaman')
@@ -155,7 +165,7 @@ export async function overridePeminjamanKaprodi(
     .eq('id', auth.user.id)
     .single();
 
-  if (profilError || profil?.role !== 'Kaprodi') {
+  if (profilError || profil?.role !== 'kaprodi') {
     return { success: false, error: 'Hanya Kaprodi yang dapat melakukan override' };
   }
 
