@@ -152,7 +152,7 @@ export default function RegisterPage() {
             inputMode="numeric"
             required
             min={2000}
-            max={tahunIni}
+            max={2045}
             placeholder={String(tahunIni)}
             className={inputCls}
           />
