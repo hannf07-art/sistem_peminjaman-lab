@@ -7,11 +7,8 @@ import { SEMUA_PRODI } from '@/lib/prodi';
 
 const ROLE_DIIZINKAN = ['mahasiswa', 'kaprodi'];
 
-/* ---------- Pemetaan error Supabase Auth -> pesan ramah ---------- */
 function petakanErrorAuth(error: { code?: string; message: string }): string {
-  if (error.message?.includes('Invalid login credentials')) {
-    return 'Email atau password salah';
-  }
+  if (error.message?.includes('Invalid login credentials')) return 'Email atau password salah';
   switch (error.code) {
     case 'user_already_exists':
     case 'email_exists':
@@ -33,17 +30,14 @@ function petakanErrorAuth(error: { code?: string; message: string }): string {
   }
 }
 
-/* ---------- Skema validasi ---------- */
+/* ---------- Skema ---------- */
 const registerSchema = z.object({
+  daftarSebagai: z.enum(['mahasiswa', 'kaprodi']),
   namaLengkap: z.string().trim().min(3, 'Nama lengkap minimal 3 karakter').max(100),
   email: z.string().trim().toLowerCase().email('Format email tidak valid'),
   password: z.string().min(8, 'Password minimal 8 karakter').max(72, 'Password terlalu panjang'),
-  angkatan: z.coerce
-    .number()
-    .int('Angkatan tidak valid')
-    .min(2000, 'Angkatan tidak valid')
-    .refine((v) => v <= new Date().getFullYear(), 'Angkatan tidak valid'),
   prodi: z.string().refine((v) => SEMUA_PRODI.includes(v), 'Program studi tidak valid'),
+  angkatan: z.union([z.string(), z.number()]).nullish(), // divalidasi manual sesuai jenis
 });
 
 const loginSchema = z.object({
@@ -52,11 +46,12 @@ const loginSchema = z.object({
 });
 
 export type RegisterInput = {
+  daftarSebagai: 'mahasiswa' | 'kaprodi';
   namaLengkap: string;
   email: string;
   password: string;
-  angkatan: string | number;
   prodi: string;
+  angkatan?: string | number | null;
 };
 
 /* =========================================================
@@ -69,11 +64,21 @@ export async function register(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-  const { namaLengkap, email, password, angkatan, prodi } = parsed.data;
+  const { daftarSebagai, namaLengkap, email, password, prodi } = parsed.data;
+
+  // Mahasiswa: angkatan wajib. Kaprodi/Dosen: angkatan diabaikan (null).
+  let angkatan: number | null = null;
+  if (daftarSebagai === 'mahasiswa') {
+    const nilai = Number(parsed.data.angkatan);
+    if (!Number.isInteger(nilai) || nilai < 2000 || nilai > new Date().getFullYear()) {
+      return { error: 'Angkatan wajib diisi dengan tahun yang valid' };
+    }
+    angkatan = nilai;
+  }
 
   const supabase = await createClient();
 
-  // Metadata ini ditangkap trigger handle_new_user() di Postgres
+  // Metadata ditangkap trigger handle_new_user(). Role tetap 'pending'.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -82,6 +87,7 @@ export async function register(
         nama_lengkap: namaLengkap,
         prodi,
         angkatan,
+        daftar_sebagai: daftarSebagai,
       },
     },
   });
@@ -90,14 +96,12 @@ export async function register(
     return { error: petakanErrorAuth(error) };
   }
 
-  // Jika Confirm email aktif dan email sudah terdaftar, Supabase mengembalikan
-  // user "palsu" tanpa identities (agar email tidak bisa ditebak)
+  // Confirm email aktif + email sudah terdaftar -> user palsu tanpa identities
   if (data.user && data.user.identities?.length === 0) {
     return { error: 'Email sudah terdaftar' };
   }
 
-  // Jika Confirm email dimatikan, signUp langsung membuat sesi.
-  // Akun masih 'pending', jadi keluarkan agar alurnya konsisten.
+  // Confirm email dimatikan -> signUp langsung membuat sesi; akun masih 'pending'
   const perluVerifikasiEmail = !data.session;
   if (data.session) {
     await supabase.auth.signOut();
@@ -109,10 +113,7 @@ export async function register(
 /* =========================================================
  * login
  * ========================================================= */
-export async function login(input: {
-  email: string;
-  password: string;
-}): Promise<{ error: string }> {
+export async function login(input: { email: string; password: string }): Promise<{ error: string }> {
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
@@ -125,7 +126,6 @@ export async function login(input: {
     return { error: petakanErrorAuth(error ?? { message: 'unknown' }) };
   }
 
-  // Cek role: akun 'pending' ditolak dan sesinya langsung dibuang
   const { data: profil, error: profilError } = await supabase
     .from('users')
     .select('role')

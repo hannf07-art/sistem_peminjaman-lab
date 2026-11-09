@@ -43,7 +43,7 @@ function LoginForm() {
       footer={
         <>
           Belum punya akun?{' '}
-          <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
+          <Link href="/register" className="font-semibold text-emerald-700 hover:text-emerald-800">
             Daftar sebagai Ketua Angkatan/Dosen
           </Link>
         </>
