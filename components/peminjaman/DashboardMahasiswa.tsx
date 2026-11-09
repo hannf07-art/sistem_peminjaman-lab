@@ -34,15 +34,21 @@ export default function DashboardMahasiswa({
   saya: Saya;
 }) {
   const [labId, setLabId] = useState(labs[0]?.id ?? '');
+  
+  // TAMBAHAN: State untuk memilih tanggal yang ingin dilihat (default ke hari ini)
+  const [tanggalLihat, setTanggalLihat] = useState(hariIni);
+
   const [jamMulai, setJamMulai] = useState('');
   const [jamSelesai, setJamSelesai] = useState('');
   const [alasan, setAlasan] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const { toast, notify, closeToast } = useToast();
-  const jadwal = useJadwalLab(labId, hariIni);
+  
+  // Memuat jadwal berdasarkan lab dan tanggal yang SEDANG DIPILIH untuk dilihat
+  const jadwal = useJadwalLab(labId, tanggalLihat);
 
-  /* ---------- Validasi ---------- */
+  /* ---------- Validasi Form (Tetap H-0 / Hari Ini) ---------- */
   const start = jamMulai ? toMin(jamMulai) : NaN;
   const end = jamSelesai ? toMin(jamSelesai) : NaN;
   const keduaTerisi = Boolean(jamMulai && jamSelesai);
@@ -69,7 +75,7 @@ export default function DashboardMahasiswa({
 
   const labTerpilih = labs.find((l) => l.id === labId);
 
-  /* ---------- Submit ---------- */
+  /* ---------- Submit Peminjaman (Wajib Hari Ini) ---------- */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!rentangValid || !labId || submitting) return;
@@ -78,7 +84,7 @@ export default function DashboardMahasiswa({
     try {
       const res = await createPeminjaman({
         labId,
-        tanggal: hariIni,
+        tanggal: hariIni, // Menggunakan hariIni agar mutlak H-0
         jamMulai,
         jamSelesai,
         alasan: alasan.trim() || undefined,
@@ -89,6 +95,7 @@ export default function DashboardMahasiswa({
         setJamMulai('');
         setJamSelesai('');
         setAlasan('');
+        setTanggalLihat(hariIni); // Otomatis kembalikan view ke hari ini
         jadwal.refetch();
       } else {
         notify({
@@ -121,12 +128,12 @@ export default function DashboardMahasiswa({
           Dashboard Mahasiswa
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          {labelTanggalID(hariIni)} · Lihat jam kosong, lalu ajukan peminjaman untuk hari ini.
+          {labelTanggalID(hariIni)} · Cek jadwal lab hari kedepan, dan ajukan peminjaman untuk hari ini.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        {/* ---------- Form ---------- */}
+        {/* ---------- Form Peminjaman (Tetap untuk Hari Ini) ---------- */}
         <GlassCard className="p-5 sm:p-6 lg:col-span-2">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-slate-900">Form Peminjaman</h2>
@@ -148,13 +155,13 @@ export default function DashboardMahasiswa({
             </div>
 
             <div>
-              <span className={labelCls}>Tanggal</span>
+              <span className={labelCls}>Tanggal Peminjaman</span>
               <div className="flex items-center justify-between rounded-xl bg-slate-100/80 px-3.5 py-2.5 text-sm text-slate-700">
                 <span>{labelTanggalID(hariIni)}</span>
                 <StatusBadge tone="info">Hari ini</StatusBadge>
               </div>
               <p className="mt-1.5 text-xs text-slate-500">
-                Peminjaman hanya dapat diajukan untuk hari ini.
+                Peminjaman langsung hanya dapat diajukan untuk hari ini.
               </p>
             </div>
 
@@ -221,23 +228,39 @@ export default function DashboardMahasiswa({
           </form>
         </GlassCard>
 
-        {/* ---------- Jadwal hari ini ---------- */}
+        {/* ---------- Viewer Jadwal (Bisa Ganti Tanggal Ke Depan/Sebelumnya) ---------- */}
         <div className="lg:col-span-3">
           <JadwalLab
-            judul="Jadwal Hari Ini"
-            subjudul={labTerpilih?.nama_lab ?? ''}
+            judul="Jadwal Laboratorium"
+            subjudul={`${labTerpilih?.nama_lab ?? ''} · ${labelTanggalID(tanggalLihat)}`}
+            aksiHeader={
+              <div>
+                <label htmlFor="tglLihatMahasiswa" className="sr-only">
+                  Pilih Tanggal
+                </label>
+                <input
+                  id="tglLihatMahasiswa"
+                  type="date"
+                  value={tanggalLihat}
+                  onChange={(e) => e.target.value && setTanggalLihat(e.target.value)}
+                  className={`${inputCls} py-2 text-xs sm:text-sm`}
+                  title="Pilih tanggal untuk melihat jadwal hari lain"
+                />
+              </div>
+            }
             bookings={jadwal.data}
             loading={jadwal.loading}
             error={jadwal.error}
-            tanggal={hariIni}
+            tanggal={tanggalLihat}
             hariIni={hariIni}
             peran="mahasiswa"
             saya={saya}
-            rentangPilihan={rentangValid ? { start, end, bentrok: !!bentrok } : null}
-            onPilihRentang={(m, s) => {
+            // Fitur klik rentang jam kosong hanya aktif jika tanggal yang dilihat adalah hari ini
+            rentangPilihan={tanggalLihat === hariIni && rentangValid ? { start, end, bentrok: !!bentrok } : null}
+            onPilihRentang={tanggalLihat === hariIni ? (m, s) => {
               setJamMulai(m);
               setJamSelesai(s);
-            }}
+            } : undefined}
             onBerubah={jadwal.refetch}
             notify={notify}
           />
