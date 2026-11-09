@@ -5,6 +5,7 @@ import { AppShell } from '@/components/peminjaman/AppShell';
 import DashboardMahasiswa from '@/components/peminjaman/DashboardMahasiswa';
 import DashboardKaprodi from '@/components/peminjaman/DashboardKaprodi';
 
+export const instant = false;
 
 export default async function PeminjamanPage() {
   const supabase = await createClient();
