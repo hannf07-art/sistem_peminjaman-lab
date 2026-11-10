@@ -43,7 +43,7 @@ export default function Navbar() {
     <nav className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 sticky top-0 z-50">
       <div className="flex items-center gap-3">
         {/* Pastikan logoapp.png sudah ada di folder public */}
-        <img src="/logoapp.png" alt="Logo" className="w-8 h-8 object-contain rounded-md" />
+        <img src="/logoapp.png" alt="Logo" className="w-8 h-8 object-cover rounded-full shadow-sm" />
         <span className="font-bold text-slate-800">Peminjaman Lab UNISA</span>
       </div>
 
