@@ -1,0 +1,23 @@
+{
+  "name": "Peminjaman Lab UNISA",
+  "short_name": "Lab UNISA",
+  "description": "Sistem Peminjaman Laboratorium Universitas 'Aisyiyah Palembang",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/logoapp.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logoapp.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

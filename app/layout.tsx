@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: 'Laboratorium UNISA Palembang',
-  description: 'Sistem peminjaman laboratorium Universitas \'Aisyiyah Palembang',
+  description: 'Sistem peminjaman laboratorium Universitas Aisyiyah Palembang',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
